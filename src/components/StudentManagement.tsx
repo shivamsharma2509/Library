@@ -8,6 +8,8 @@ interface StudentManagementProps {
   onUpdateStudent: (id: string, student: Partial<Student>) => void;
   onDeleteStudent: (id: string) => void;
   onRefreshFromCSV: () => Promise<number>;
+  availableSeats: number[];
+  onAssignSeat: (seatNumber: number, studentId: string) => void;
 }
 
 const StudentManagement: React.FC<StudentManagementProps> = ({
@@ -16,6 +18,8 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
   onUpdateStudent,
   onDeleteStudent,
   onRefreshFromCSV,
+  availableSeats,
+  onAssignSeat,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,6 +139,10 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       return;
     }
 
+    const registrationDate = formData.get('registrationDate') as string || new Date().toISOString().split('T')[0];
+    const seatNumberStr = formData.get('seatNumber') as string;
+    const seatNumber = seatNumberStr ? parseInt(seatNumberStr, 10) : undefined;
+
     const studentData = {
       name,
       mobile,
@@ -147,21 +155,35 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       address: formData.get('address') as string,
       vehicleNumber: formData.get('vehicleNumber') as string,
       photo: formData.get('photo') as string,
-      registrationDate: new Date().toISOString().split('T')[0],
+      registrationDate,
       feeExpiryDate: (() => {
-        const now = new Date();
-        const expiryDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const regDate = new Date(registrationDate);
+        const expiryDate = new Date(regDate.getFullYear(), regDate.getMonth() + 1, regDate.getDate());
         return expiryDate.toISOString().split('T')[0];
       })(),
       status: 'active' as const,
       totalFeesPaid: 0,
+      seatNumber,
     };
 
     if (editingStudent) {
+      // If seat number changed and is valid, assign the seat
+      if (seatNumber && seatNumber !== editingStudent.seatNumber) {
+        onAssignSeat(seatNumber, editingStudent.id);
+      }
       onUpdateStudent(editingStudent.id, studentData);
       setEditingStudent(null);
     } else {
       onAddStudent(studentData);
+      // If seat number provided for new student, assign it after adding
+      if (seatNumber) {
+        setTimeout(() => {
+          const newStudent = students[students.length - 1];
+          if (newStudent) {
+            onAssignSeat(seatNumber, newStudent.id);
+          }
+        }, 100);
+      }
     }
     
     setShowAddForm(false);
@@ -363,6 +385,34 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   placeholder="Enter photo URL or description"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
+                <input
+                  type="date"
+                  name="registrationDate"
+                  defaultValue={editingStudent?.registrationDate || new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Seat Number</label>
+                <select
+                  name="seatNumber"
+                  defaultValue={editingStudent?.seatNumber?.toString() || ''}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">No Seat Assigned</option>
+                  {editingStudent?.seatNumber && !availableSeats.includes(editingStudent.seatNumber) && (
+                    <option value={editingStudent.seatNumber}>Seat {editingStudent.seatNumber} (Current)</option>
+                  )}
+                  {availableSeats.map(seat => (
+                    <option key={seat} value={seat}>Seat {seat}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {availableSeats.length > 0 ? `${availableSeats.length} seats available` : 'No seats available'}
+                </p>
               </div>
               <div className="flex space-x-3 pt-4">
                 <button

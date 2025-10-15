@@ -98,11 +98,38 @@ export const useLibraryData = () => {
           console.log('Loaded students from CSV:', studentsFromCSV.length);
           setStudents(studentsFromCSV);
           saveToStorage(STUDENTS_STORAGE_KEY, studentsFromCSV);
+
+          // Auto-assign seats for students with seat numbers
+          const savedSeats = localStorage.getItem(getUserStorageKey(SEATS_STORAGE_KEY));
+          let initialSeats: Seat[] = Array.from({ length: 102 }, (_, i) => ({
+            number: i + 1,
+            isOccupied: false,
+          }));
+
+          if (!savedSeats) {
+            // Assign seats from CSV data
+            studentsFromCSV.forEach(student => {
+              if (student.seatNumber) {
+                const seatIndex = initialSeats.findIndex(s => s.number === student.seatNumber);
+                if (seatIndex !== -1 && !initialSeats[seatIndex].isOccupied) {
+                  initialSeats[seatIndex] = {
+                    ...initialSeats[seatIndex],
+                    isOccupied: true,
+                    studentId: student.id,
+                    studentName: student.name,
+                    assignedDate: student.registrationDate
+                  };
+                }
+              }
+            });
+            setSeats(initialSeats);
+            saveToStorage(SEATS_STORAGE_KEY, initialSeats);
+          }
         }
-        
+
         // Load saved data from localStorage
         loadFromStorage();
-        
+
         // Initialize seats if not already loaded
         const savedSeats = localStorage.getItem(getUserStorageKey(SEATS_STORAGE_KEY));
         if (!savedSeats) {
@@ -331,13 +358,23 @@ export const useLibraryData = () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const monthlyTransactions = transactions.filter(t => t.transactionDate.startsWith(currentMonth));
     const monthlyRevenue = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    const expiringToday = students.filter(s => s.feeExpiryDate === today).length;
-    const expiringThisWeek = students.filter(s => s.feeExpiryDate <= nextWeek && s.feeExpiryDate >= today).length;
-    const pendingFees = students.filter(s => new Date(s.feeExpiryDate) < new Date()).length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+    const expiringToday = students.filter(s => s.feeExpiryDate === todayStr).length;
+    const expiringThisWeek = students.filter(s => s.feeExpiryDate <= nextWeekStr && s.feeExpiryDate >= todayStr).length;
+
+    // Count students whose fee expiry date is before today (fees have expired)
+    const pendingFees = students.filter(s => {
+      const expiryDate = new Date(s.feeExpiryDate);
+      expiryDate.setHours(0, 0, 0, 0);
+      return expiryDate < today;
+    }).length;
 
     return {
       totalStudents: students.length,
@@ -381,9 +418,35 @@ export const useLibraryData = () => {
         setStudents(updatedStudents);
         saveToStorage(STUDENTS_STORAGE_KEY, updatedStudents);
 
+        // Auto-assign seats for students who have seat numbers from CSV
+        const updatedSeats = [...seats];
+        let seatsAssigned = 0;
+
+        newStudents.forEach(student => {
+          if (student.seatNumber) {
+            const seatIndex = updatedSeats.findIndex(s => s.number === student.seatNumber);
+            if (seatIndex !== -1 && !updatedSeats[seatIndex].isOccupied) {
+              updatedSeats[seatIndex] = {
+                ...updatedSeats[seatIndex],
+                isOccupied: true,
+                studentId: student.id,
+                studentName: student.name,
+                assignedDate: student.registrationDate
+              };
+              seatsAssigned++;
+            }
+          }
+        });
+
+        if (seatsAssigned > 0) {
+          setSeats(updatedSeats);
+          saveToStorage(SEATS_STORAGE_KEY, updatedSeats);
+          console.log(`Auto-assigned ${seatsAssigned} seats from CSV data`);
+        }
+
         addActivity({
           type: 'registration',
-          message: `Refreshed data: ${newStudents.length} new student(s) added from CSV`,
+          message: `Refreshed data: ${newStudents.length} new student(s) added from CSV${seatsAssigned > 0 ? `, ${seatsAssigned} seat(s) auto-assigned` : ''}`,
         });
       } else {
         addActivity({

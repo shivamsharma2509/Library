@@ -140,6 +140,8 @@ function App() {
             onUpdateStudent={updateStudent}
             onDeleteStudent={deleteStudent}
             onRefreshFromCSV={refreshStudentsFromCSV}
+            availableSeats={seats.filter(s => !s.isOccupied).map(s => s.number)}
+            onAssignSeat={assignSeat}
           />
         );
       case 'seats':

@@ -119,6 +119,7 @@ export const fetchStudentsFromCSV = async (): Promise<Student[]> => {
                   const address = getField(['Address', 'address', 'home address', 'Home Address', 'student address', 'Student Address']);
                   const vehicleNumber = getField(['Vehicle Number', 'Vehicle number', 'vehicle number', 'vehicle no', 'Vehicle No', 'bike number', 'car number']);
                   const photo = getField(['Student Photo', 'student photo', 'Student photo', 'photo', 'Photo', 'image', 'student image']);
+                  const seatNumberStr = getField(['Seat Number', 'seat number', 'Seat number', 'seat no', 'Seat No', 'Seat', 'seat']);
 
 
                   // Skip rows with missing essential data
@@ -148,6 +149,15 @@ export const fetchStudentsFromCSV = async (): Promise<Student[]> => {
                   const feeExpiryDate = new Date(registrationDate);
                   feeExpiryDate.setDate(feeExpiryDate.getDate() + 30);
 
+                  // Parse seat number if provided
+                  let seatNumber: number | undefined = undefined;
+                  if (seatNumberStr) {
+                    const parsedSeat = parseInt(seatNumberStr, 10);
+                    if (!isNaN(parsedSeat) && parsedSeat >= 1 && parsedSeat <= 102) {
+                      seatNumber = parsedSeat;
+                    }
+                  }
+
                   const student: Student = {
                     id: `csv-${index + 1}`,
                     name: name,
@@ -161,6 +171,7 @@ export const fetchStudentsFromCSV = async (): Promise<Student[]> => {
                     address: address || undefined,
                     vehicleNumber: vehicleNumber || undefined,
                     photo: photo || undefined,
+                    seatNumber: seatNumber,
                     registrationDate: registrationDate.toISOString().split('T')[0],
                     feeExpiryDate: feeExpiryDate.toISOString().split('T')[0],
                     status: 'active',
