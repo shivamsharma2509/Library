@@ -18,6 +18,7 @@ export interface Student {
   status: 'active' | 'inactive' | 'expired';
   paymentMode?: 'online' | 'offline';
   totalFeesPaid: number;
+  deletedAt?: string;
 }
 
 export interface Seat {

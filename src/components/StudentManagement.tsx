@@ -4,9 +4,11 @@ import { Student } from '../types';
 
 interface StudentManagementProps {
   students: Student[];
+  deletedStudents: Student[];
   onAddStudent: (student: Omit<Student, 'id'>) => void;
   onUpdateStudent: (id: string, student: Partial<Student>) => void;
   onDeleteStudent: (id: string) => void;
+  onRestoreStudent: (id: string) => void;
   onRefreshFromCSV: () => Promise<number>;
   availableSeats: number[];
   onAssignSeat: (seatNumber: number, studentId: string) => void;
@@ -14,9 +16,11 @@ interface StudentManagementProps {
 
 const StudentManagement: React.FC<StudentManagementProps> = ({
   students,
+  deletedStudents,
   onAddStudent,
   onUpdateStudent,
   onDeleteStudent,
+  onRestoreStudent,
   onRefreshFromCSV,
   availableSeats,
   onAssignSeat,
@@ -27,8 +31,11 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
+  const [activeView, setActiveView] = useState<'active' | 'deleted'>('active');
 
-  const filteredStudents = students.filter(student =>
+  const currentStudentList = activeView === 'active' ? students : deletedStudents;
+
+  const filteredStudents = currentStudentList.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.mobile.includes(searchTerm) ||
     student.seatNumber?.toString().includes(searchTerm)
@@ -237,6 +244,36 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
         </div>
       )}
 
+      {/* Tabs */}
+      <div className="flex space-x-2 border-b border-gray-200">
+        <button
+          onClick={() => {
+            setActiveView('active');
+            setSearchTerm('');
+          }}
+          className={`px-6 py-3 font-medium transition-colors ${
+            activeView === 'active'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Active Students ({students.length})
+        </button>
+        <button
+          onClick={() => {
+            setActiveView('deleted');
+            setSearchTerm('');
+          }}
+          className={`px-6 py-3 font-medium transition-colors ${
+            activeView === 'deleted'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Deleted Students ({deletedStudents.length})
+        </button>
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -262,7 +299,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                 <p className="text-sm text-red-700">{validationError}</p>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form key={editingStudent?.id || 'new'} onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
@@ -392,8 +429,14 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   type="date"
                   name="registrationDate"
                   defaultValue={editingStudent?.registrationDate || new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={!!editingStudent}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-700"
                 />
+                {editingStudent && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Registration date cannot be changed
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Seat Number</label>
@@ -627,7 +670,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seat</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee Expiry</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{activeView === 'active' ? 'Fee Expiry' : 'Deleted On'}</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -700,23 +743,57 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
-                      {new Date(student.feeExpiryDate).toLocaleDateString('en-IN')}
+                      {activeView === 'active'
+                        ? new Date(student.feeExpiryDate).toLocaleDateString('en-IN')
+                        : student.deletedAt
+                          ? new Date(student.deletedAt).toLocaleDateString('en-IN', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'N/A'
+                      }
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => setEditingStudent(student)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteStudent(student.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {activeView === 'active' ? (
+                        <>
+                          <button
+                            onClick={() => setEditingStudent(student)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Edit Student"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to delete ${student.name}?`)) {
+                                onDeleteStudent(student.id);
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete Student"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Restore ${student.name}?`)) {
+                              onRestoreStudent(student.id);
+                            }
+                          }}
+                          className="text-green-600 hover:text-green-900 flex items-center space-x-1"
+                          title="Restore Student"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <span className="text-xs">Restore</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

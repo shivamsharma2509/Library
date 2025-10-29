@@ -22,12 +22,14 @@ function App() {
 
   const {
     students,
+    deletedStudents,
     seats,
     transactions,
     isLoading,
     addStudent,
     updateStudent,
     deleteStudent,
+    restoreStudent,
     assignSeat,
     releaseSeat,
     addTransaction,
@@ -136,9 +138,11 @@ function App() {
         return (
           <StudentManagement
             students={students}
+            deletedStudents={deletedStudents}
             onAddStudent={addStudent}
             onUpdateStudent={updateStudent}
             onDeleteStudent={deleteStudent}
+            onRestoreStudent={restoreStudent}
             onRefreshFromCSV={refreshStudentsFromCSV}
             availableSeats={seats.filter(s => !s.isOccupied).map(s => s.number)}
             onAssignSeat={assignSeat}

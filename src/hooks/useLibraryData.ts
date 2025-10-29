@@ -231,14 +231,33 @@ export const useLibraryData = () => {
     if (student?.seatNumber) {
       releaseSeat(student.seatNumber);
     }
-    const updatedStudents = students.filter(student => student.id !== id);
+    const updatedStudents = students.map(s =>
+      s.id === id ? { ...s, deletedAt: new Date().toISOString() } : s
+    );
     setStudents(updatedStudents);
     saveToStorage(STUDENTS_STORAGE_KEY, updatedStudents);
-    
+
     if (student) {
       addActivity({
         type: 'registration',
         message: `Student ${student.name} removed from system`,
+        studentName: student.name,
+      });
+    }
+  };
+
+  const restoreStudent = (id: string) => {
+    const student = students.find(s => s.id === id);
+    const updatedStudents = students.map(s =>
+      s.id === id ? { ...s, deletedAt: undefined } : s
+    );
+    setStudents(updatedStudents);
+    saveToStorage(STUDENTS_STORAGE_KEY, updatedStudents);
+
+    if (student) {
+      addActivity({
+        type: 'registration',
+        message: `Student ${student.name} restored`,
         studentName: student.name,
       });
     }
@@ -353,7 +372,8 @@ export const useLibraryData = () => {
   };
 
   const getDashboardStats = (): DashboardStats => {
-    const activeStudents = students.filter(s => s.status === 'active').length;
+    const activeList = students.filter(s => !s.deletedAt);
+    const activeStudents = activeList.filter(s => s.status === 'active').length;
     const occupiedSeats = seats.filter(s => s.isOccupied).length;
     const currentMonth = new Date().toISOString().slice(0, 7);
     const monthlyTransactions = transactions.filter(t => t.transactionDate.startsWith(currentMonth));
@@ -366,18 +386,17 @@ export const useLibraryData = () => {
     nextWeek.setDate(nextWeek.getDate() + 7);
     const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-    const expiringToday = students.filter(s => s.feeExpiryDate === todayStr).length;
-    const expiringThisWeek = students.filter(s => s.feeExpiryDate <= nextWeekStr && s.feeExpiryDate >= todayStr).length;
+    const expiringToday = activeList.filter(s => s.feeExpiryDate === todayStr).length;
+    const expiringThisWeek = activeList.filter(s => s.feeExpiryDate <= nextWeekStr && s.feeExpiryDate >= todayStr).length;
 
-    // Count students whose fee expiry date is before today (fees have expired)
-    const pendingFees = students.filter(s => {
+    const pendingFees = activeList.filter(s => {
       const expiryDate = new Date(s.feeExpiryDate);
       expiryDate.setHours(0, 0, 0, 0);
       return expiryDate < today;
     }).length;
 
     return {
-      totalStudents: students.length,
+      totalStudents: activeList.length,
       activeStudents,
       occupiedSeats,
       availableSeats: 102 - occupiedSeats,
@@ -466,7 +485,8 @@ export const useLibraryData = () => {
   };
 
   return {
-    students,
+    students: students.filter(s => !s.deletedAt),
+    deletedStudents: students.filter(s => s.deletedAt),
     seats,
     transactions,
     notifications,
@@ -475,6 +495,7 @@ export const useLibraryData = () => {
     addStudent,
     updateStudent,
     deleteStudent,
+    restoreStudent,
     assignSeat,
     releaseSeat,
     addTransaction,
