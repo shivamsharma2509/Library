@@ -51,6 +51,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
       paymentMode: formData.get('paymentMode') as 'online' | 'offline',
       paymentMethod: formData.get('paymentMethod') as string,
       transactionDate: new Date().toISOString().split('T')[0],
+      registrationDate: student.registrationDate,
     };
 
     onAddTransaction(transactionData);
@@ -59,14 +60,15 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
   };
 
   const exportToCSV = () => {
-    const headers = ['Date', 'Student', 'Amount', 'Payment Mode', 'Method', 'Receipt'];
+    const headers = ['Date', 'Student', 'Amount', 'Payment Mode', 'Method', 'Receipt', 'Registration Date'];
     const csvData = filteredTransactions.map(t => [
       t.transactionDate,
       t.studentName,
       t.amount,
       t.paymentMode,
       t.paymentMethod,
-      t.receiptNumber
+      t.receiptNumber,
+      t.registrationDate
     ]);
     
     const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
@@ -270,6 +272,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry</th>
               </tr>
             </thead>
@@ -299,6 +302,9 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.receiptNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(transaction.registrationDate).toLocaleDateString('en-IN')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(transaction.expiryDate).toLocaleDateString('en-IN')}

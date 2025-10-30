@@ -39,6 +39,7 @@ export interface FeeTransaction {
   transactionDate: string;
   expiryDate: string;
   receiptNumber: string;
+  registrationDate: string;
 }
 
 export interface Notification {
