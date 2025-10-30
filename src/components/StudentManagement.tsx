@@ -127,7 +127,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       return;
     }
     
-    const dateOfBirth = formData.get('dateOfBirth') as string;
+    const dateOfBirth = formData.get('dateOfBirth') as string || new Date().toISOString().split('T')[0];
     const gender = formData.get('gender') as 'Male' | 'Female';
     const shift = formData.get('shift') as '7 AM - 10 PM' | '24 hours';
 
