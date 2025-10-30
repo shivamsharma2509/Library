@@ -338,7 +338,8 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                 <input
                   type="date"
                   name="dateOfBirth"
-                  defaultValue={editingStudent?.dateOfBirth || ''}
+                  defaultValue={editingStudent?.dateOfBirth || new Date().toISOString
+                  ().split('T')[0]}
                   required
                   readOnly={!!editingStudent}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent read-only:bg-gray-100 read-only:text-gray-700"
