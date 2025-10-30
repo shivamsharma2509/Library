@@ -131,10 +131,10 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
     const gender = formData.get('gender') as 'Male' | 'Female';
     const shift = formData.get('shift') as '7 AM - 10 PM' | '24 hours';
 
-    /*if (!dateOfBirth) {
+    if (!dateOfBirth) {
       setValidationError('Date of birth is required');
       return;
-    } */
+    }
 
     if (!gender) {
       setValidationError('Gender is required');
