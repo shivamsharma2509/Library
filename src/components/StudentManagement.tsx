@@ -127,14 +127,16 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       return;
     }
     
-    const dateOfBirth = formData.get('dateOfBirth') as string || new Date().toISOString().split('T')[0];
+    const dateOfBirth = editingStudent
+      ? editingStudent.dateOfBirth
+      : (formData.get('dateOfBirth') as string || new Date().toISOString().split('T')[0]);
     const gender = formData.get('gender') as 'Male' | 'Female';
     const shift = formData.get('shift') as '7 AM - 10 PM' | '24 hours';
 
-    /*if (!dateOfBirth) {
+    if (!dateOfBirth) {
       setValidationError('Date of birth is required');
       return;
-    } */
+    }
 
     if (!gender) {
       setValidationError('Gender is required');
@@ -146,7 +148,9 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       return;
     }
 
-    const registrationDate = formData.get('registrationDate') as string || new Date().toISOString().split('T')[0];
+    const registrationDate = editingStudent
+      ? editingStudent.registrationDate
+      : (formData.get('registrationDate') as string || new Date().toISOString().split('T')[0]);
     const seatNumberStr = formData.get('seatNumber') as string;
     const seatNumber = seatNumberStr ? parseInt(seatNumberStr, 10) : undefined;
 
@@ -333,23 +337,18 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  defaultValue={editingStudent?.dateOfBirth || new Date().toISOString
-                  ().split('T')[0]}
-                  required
-                  readOnly={!!editingStudent}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent read-only:bg-gray-100 read-only:text-gray-700"
-                />
-                {editingStudent && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Date of birth cannot be changed
-                  </p>
-                )}
-              </div>
+              {!editingStudent && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    defaultValue={new Date().toISOString().split('T')[0]}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                 <select
@@ -430,21 +429,17 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
-                <input
-                  type="date"
-                  name="registrationDate"
-                  defaultValue={editingStudent?.registrationDate || new Date().toISOString().split('T')[0]}
-                  disabled={!!editingStudent}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-700"
-                />
-                {editingStudent && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Registration date cannot be changed
-                  </p>
-                )}
-              </div>
+              {!editingStudent && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
+                  <input
+                    type="date"
+                    name="registrationDate"
+                    defaultValue={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Seat Number</label>
                 <select
