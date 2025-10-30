@@ -17,6 +17,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'online' | 'offline'>('all');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedStudentId, setSelectedStudentId] = useState('');
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,6 +57,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
 
     onAddTransaction(transactionData);
     setShowAddForm(false);
+    setSelectedStudentId('');
     e.currentTarget.reset();
   };
 
@@ -185,6 +187,8 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                 <select
                   name="studentId"
                   required
+                  value={selectedStudentId}
+                  onChange={(e) => setSelectedStudentId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="">Select Student</option>
@@ -195,6 +199,20 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                   ))}
                 </select>
               </div>
+              {selectedStudentId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
+                  <input
+                    type="date"
+                    value={students.find(s => s.id === selectedStudentId)?.registrationDate || ''}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Student's registration date (read-only)
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                 <input
@@ -250,7 +268,10 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setSelectedStudentId('');
+                  }}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors"
                 >
                   Cancel

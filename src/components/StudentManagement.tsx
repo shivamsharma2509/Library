@@ -340,8 +340,8 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   name="dateOfBirth"
                   defaultValue={editingStudent?.dateOfBirth || ''}
                   required
-                  disabled={!!editingStudent}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-700"
+                  readOnly={!!editingStudent}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent read-only:bg-gray-100 read-only:text-gray-700"
                 />
                 {editingStudent && (
                   <p className="text-xs text-gray-500 mt-1">
