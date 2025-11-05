@@ -148,9 +148,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       return;
     }
 
-    const registrationDate = editingStudent
-      ? editingStudent.registrationDate
-      : (formData.get('registrationDate') as string || new Date().toISOString().split('T')[0]);
+    const registrationDate = formData.get('registrationDate') as string || new Date().toISOString().split('T')[0];
     const seatNumberStr = formData.get('seatNumber') as string;
     const seatNumber = seatNumberStr ? parseInt(seatNumberStr, 10) : undefined;
 
@@ -429,17 +427,15 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
-              {!editingStudent && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
-                  <input
-                    type="date"
-                    name="registrationDate"
-                    defaultValue={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
+                <input
+                  type="date"
+                  name="registrationDate"
+                  defaultValue={editingStudent?.registrationDate || new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Seat Number</label>
                 <select
